@@ -36,7 +36,7 @@ def train(rank, args, shared_model_group):
                     entropy = -(log_prob * prob).sum(1, keepdim=True)
                     action = prob.multinomial(num_samples=1).detach()
                     log_prob = log_prob.gather(1, action)
-                    reward = env_group.step(idx, action.item())
+                    reward, _, _, _ = env_group.step(idx, action.item())
 
                     values[idx].append(value)
                     log_probs[idx].append(log_prob)

@@ -5,7 +5,7 @@ import torch
 import copy
 
 from entropy_group import EntropyGroup
-from custom_envs import ExplorationGameWall
+from custom_envs import ExplorationGameDual, ExplorationGameNoisy
 
 class EnvGroup(object):
     def __init__(self, args):
@@ -13,16 +13,17 @@ class EnvGroup(object):
         self.mutual_coef = args.mutual_coef
         self.num_agents = args.num_agents
         self.env_name = args.env_name
+        self.max_episode_length = args.max_episode_length
 
         self.envs = {idx: self.create_env() for idx in range(self.num_agents)}
         self.entropy_group = EntropyGroup(args)
 
     def create_env(self):
-        if self.env_name == 'gridworld':
-            env = ExplorationGame(40)
+        if self.env_name == 'gridworlddual':
+            env = ExplorationGameDual(40)
             self.num_actions = env.action_space
-        elif self.env_name == 'gridworldwall':
-            env = ExplorationGameWall(40)
+        elif self.env_name == 'gridworldnoisy':
+            env = ExplorationGameNoisy(40)
             self.num_actions = env.action_space
         else:
             env = gym.make(self.env_name)
@@ -32,6 +33,7 @@ class EnvGroup(object):
     def reset(self):
         self.dones = {}
         self.infos = {}
+        self.game_lens = {idx: 0 for idx in range(self.num_agents)}
         self.entropy_group.reset()
         self.canvas = torch.zeros(1,self.num_agents,40,40)
         for idx in range(self.num_agents):
@@ -47,14 +49,18 @@ class EnvGroup(object):
             _ = self.get_mutual_reward(idx)
 
     def step(self, idx, action):
-        state, extrinsic_reward, self.dones[idx], self.infos[idx] = self.envs[idx].step(action)
+        self.game_lens[idx] += 1
+        state, extrinsic_reward, done, self.infos[idx] = self.envs[idx].step(action)
         state = self._process_frame(state)
+        done = done or self.game_lens[idx] >= self.max_episode_length
+        self.infos[idx] = done
+
         self.entropy_group.update_count_matrix(idx, state)
         self.canvas[0,idx,:,:] = torch.from_numpy(state).unsqueeze(0).unsqueeze(0)
         traj_reward = self.get_traj_reward(idx)
         mutual_reward = self.get_mutual_reward(idx)
         reward = extrinsic_reward + traj_reward + mutual_reward
-        return reward
+        return reward, extrinsic_reward, traj_reward, mutual_reward
 
     def _process_frame(self, frame):
         if 'gridworld' in self.env_name:
@@ -92,6 +98,9 @@ class EnvGroup(object):
 
     def get_info(self):
         return self.infos
+
+    def get_game_lens(self):
+        return self.game_lens
 
     def is_all_done(self):
         num_dones = 0

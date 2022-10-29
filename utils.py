@@ -13,8 +13,8 @@ def process_info(infos):
         path = infos[idx]
         paths.append(path)
         results[idx] = len(np.unique(path,axis=0))
-    paths = np.concatenate(paths,axis=0)
-    results['all'] = len(np.unique(paths,axis=0))
+        paths_so_far = np.concatenate(paths,axis=0)
+        results[f'all{idx}'] = len(np.unique(paths_so_far,axis=0))
     return results
 
 def process_traj(traj_entropys):
@@ -27,4 +27,8 @@ def process_mutual(mutual_entropys):
     results = {}
     for idx in mutual_entropys:
         results[idx] = round(mutual_entropys[idx],2)
+    return results
+
+def process_reward(all_rewards):
+    results = {idx: round(sum(all_rewards[idx]),2) for idx in all_rewards}
     return results
