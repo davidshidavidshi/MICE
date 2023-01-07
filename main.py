@@ -24,9 +24,9 @@ parser.add_argument('--num-processes', type=int, default=8)
 parser.add_argument('--num-agents', type=int, default=3)
 parser.add_argument('--num-steps', type=int, default=20)
 parser.add_argument('--max-episode-length', type=int, default=4000)
-parser.add_argument('--env-name', default='PongDeterministic-v4')
-parser.add_argument('--traj-coef', type=float, default=0.05)
-parser.add_argument('--mutual-coef', type=float, default=0)
+parser.add_argument('--env-name', default='gridworlddual')
+parser.add_argument('--traj-coef', type=float, default=0.1)
+parser.add_argument('--mutual-coef', type=float, default=0.1)
 parser.add_argument('--load-model', default=False)
 
 

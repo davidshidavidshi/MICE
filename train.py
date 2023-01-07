@@ -43,22 +43,21 @@ def train(rank, args, shared_model_group):
                     rewards[idx].append(reward)
                     entropies[idx].append(entropy)
 
-                next_idx = (idx+1)%args.num_agents
-                require_train = (next_idx == 0 and step == args.num_steps-2) or (next_idx != 0 and step == args.num_steps-1) or (env_group.dones[next_idx] == True)
-                if require_train:
-                    if env_group.dones[next_idx] == True:
-                        values[next_idx].append(torch.zeros(1,1))
-                    else:
-                        value, _ = local_model_group.inference(next_idx, copy.deepcopy(env_group.canvas), dummy=True)
-                        values[next_idx].append(value)
-                    update_model(args, next_idx, values[next_idx], log_probs[next_idx], rewards[next_idx], entropies[next_idx], local_model_group, shared_model_group)
-                    
-                    local_model_group.detach_hxcx(next_idx)
-                    values[next_idx] = []
-                    log_probs[next_idx] = []
-                    rewards[next_idx] = []
-                    entropies[next_idx] = []
-                    local_model_group.reload_models(next_idx, shared_model_group)
+                    require_train = (idx == args.num_steps-1) or (env_group.dones[idx] == True)
+                    if require_train:
+                        if env_group.dones[idx] == True:
+                            values[idx].append(torch.zeros(1,1))
+                        else:
+                            value, _ = local_model_group.inference(idx, copy.deepcopy(env_group.canvas), dummy=True)
+                            values[idx].append(value)
+                        update_model(args, idx, values[idx], log_probs[idx], rewards[idx], entropies[idx], local_model_group, shared_model_group)
+                        
+                        local_model_group.detach_hxcx(idx)
+                        values[idx] = []
+                        log_probs[idx] = []
+                        rewards[idx] = []
+                        entropies[idx] = []
+                        local_model_group.reload_models(idx, shared_model_group)
         
         if env_group.is_all_done():
             env_group.reset()

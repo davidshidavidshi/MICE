@@ -53,7 +53,7 @@ class EnvGroup(object):
         state, extrinsic_reward, done, self.infos[idx] = self.envs[idx].step(action)
         state = self._process_frame(state)
         done = done or self.game_lens[idx] >= self.max_episode_length
-        self.infos[idx] = done
+        self.dones[idx] = done
 
         self.entropy_group.update_count_matrix(idx, state)
         self.canvas[0,idx,:,:] = torch.from_numpy(state).unsqueeze(0).unsqueeze(0)

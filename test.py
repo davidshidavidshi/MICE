@@ -33,7 +33,7 @@ def test(rank, args, shared_model_group):
                 continue
             state = copy.deepcopy(env_group.canvas)
             state[0,idx+1:,:,:] = 0
-            _, logit = local_model_group.inference(idx, env_group.canvas, eval = True)
+            _, logit = local_model_group.inference(idx, env_group.canvas, eval = True) # can replace env_group.canvas with state
             prob = F.softmax(logit, dim=-1)
             if 'gridworld' in args.env_name:
                 action = prob.multinomial(num_samples=1).detach()
